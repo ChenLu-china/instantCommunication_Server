@@ -1,6 +1,6 @@
 import pymysql
 
-host = '172.16.0.8:3306'
+host = '172.16.0.8'
 port = 3306
 
 def create_MySql_Connection():
