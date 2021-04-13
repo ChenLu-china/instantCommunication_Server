@@ -3,8 +3,8 @@ import socket
 import time
 
 MaxBytes = 1024 * 1024
-# host = '159.75.220.96'
-host = '127.0.0.1'
+host = '159.75.220.96'
+# host = '127.0.0.1'
 port = 8888
 
 s = socket.socket(socket.AF_INET,
