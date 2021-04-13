@@ -10,7 +10,7 @@ import threading
 
 
 max_bytes = 1024 * 1024
-bind_address = '159.75.220.96'
+bind_address = '0.0.0.0'
 bind_port = 8888
 auth_lock = threading.Lock()
 
