@@ -52,6 +52,7 @@ def main_function(sock, addr):
                 finally:
                     user_lock.release()
                 # 跳出循环终止线程
+                print(f'{addr} 断开连接，已关闭 socket')
                 break
 
 
@@ -60,7 +61,7 @@ def auth(sock, addr):
     time_start = time.time()
     while True:
         # Auth timeout 3 s
-        if time.time() - time_start > 3:
+        if time.time() - time_start > 10:
             print("connectiong timeout")
             socket_send(sock, json.dumps({"success": False, "message": "Timeout"}).encode('utf-8'))
             sock.close()
@@ -79,18 +80,23 @@ def auth(sock, addr):
             break
         
         try:
-            json_obj = json.loads(recv_bytes.decode('utf-8'))
+            json_msg = recv_bytes.decode('utf-8')
+            print("login json >>> " + json_msg)
+            json_obj = json.loads(json_msg)
         except:
             print("JSON 不合法")
+            socket_send(sock, json.dumps({"success": False, "message": "Wrong JSON format"}).encode('utf-8'))
             sock.close()
             break
 
         # 如果不是 login，不合法，关闭连接
         if 'head' not in json_obj.keys() or json_obj['head'] != 'login':
+            socket_send(sock, json.dumps({"success": False, "message": "No login head"}).encode('utf-8'))
             sock.close()
             break
 
         if 'user_name' not in json_obj.keys() or len(json_obj['user_name']) == 0 or 'user_password' not in json_obj.keys() or len(json_obj['user_password']) == 0:
+            socket_send(sock, json.dumps({"success": False, "message": "Missing parameters"}).encode('utf-8'))
             sock.close()
             break
 

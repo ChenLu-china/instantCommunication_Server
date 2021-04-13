@@ -40,11 +40,19 @@ def send_text(send_user, to_user, message):
     if len(to_user) == 0 or len(message) == 0:
         return
     # 获取对方的消息队列
-    msgq = user_msgq_map.get(to_user)
-    if None == msgq:
+    msgq_list = user_msgq_map.get(to_user)
+    if None == msgq_list:
         return
     
-    # 获取接收用户队列锁
+    # 获取接收用户队列锁，有 msgq 一定已经有创建锁
+    user_lock = user_lock_map.get(to_user)
+    user_lock.acquire()
+    try:
+        # 添加到目标用户的所有消息队列中
+        for msgq in msgq_list:
+            msgq.offer(json.dumps({"type": "text", "from": send_user, "message": message}).encode('utf-8'))
+    finally:
+        user_lock.release()
     
 
 
