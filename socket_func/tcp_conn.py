@@ -3,7 +3,7 @@ import threading
 import json
 from service import LoginService
 from concurrent_collection.cQueue import ConcurrentQueue
-from global.params import session_user_map, user_msgq_map
+from global_param.params import session_user_map, user_msgq_map
 import time
 import uuid
 import threading
@@ -33,7 +33,7 @@ def start_server():
 def main_function(sock, addr):
 
     
-    flag, msgQ, session_id = auth(sock)
+    flag, msgQ, session_id = auth(sock, addr)
     
     # 死循环从队列里面获取消息回写给客户端
     while flag:
@@ -58,15 +58,17 @@ def main_function(sock, addr):
 
 
 def auth(sock, addr):
+    sock.setblocking(0) # 设置非阻塞
     time_start = time.time()
     while True:
-        # Auth timeout 3 mins
-        if time.time() - time_start > 180:
+        # Auth timeout 3 s
+        if time.time() - time_start > 3:
+            print("connectiong timeout")
             sock.close()
             break
         # 非阻塞式接受消息
         try:
-            recv_bytes = sock.recv(max_bytes, 0x40)
+            recv_bytes = sock.recv(max_bytes)
         except BlockingIOError as e:
             recv_bytes = None
 
@@ -77,7 +79,7 @@ def auth(sock, addr):
             sock.close()
             break
         
-        json_obj = json.loads(recv_bytes.decode())
+        json_obj = json.loads(recv_bytes.decode('utf-8'))
         # 如果不是 login，不合法，关闭连接
         if json_obj['head'] != 'login':
             sock.close()
@@ -105,7 +107,7 @@ def auth(sock, addr):
             session_user_map[session_id] = json_obj['user_name']
 
             receivers_list = LoginService.get_communication_list(json_obj['user_name'])
-            msg = json.dumps({"session_id": session_id, "receivers": receivers_list}).encode()
+            msg = json.dumps({"session_id": session_id, "receivers": receivers_list}).encode('utf-8')
             # 将消息塞入队列
             msgQ.offer(msg)
             return True, msgQ, session_id
